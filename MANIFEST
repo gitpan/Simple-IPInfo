@@ -1,0 +1,16 @@
+LICENSE
+MANIFEST
+META.yml
+Makefile.PL
+README
+bin/compare_ip_loc.pl
+bin/ip_loc_taobao.pl
+bin/merge_ip_loc.pl
+bin/parse_ip_as.pl
+bin/parse_ip_loc.pl
+bin/sort_ip_loc.pl
+dist.ini
+lib/Simple/IPInfo.pm
+lib/Simple/IPInfo_ASN.json
+lib/Simple/IPInfo_LOC.json
+xt/01.get_ip_info.t
