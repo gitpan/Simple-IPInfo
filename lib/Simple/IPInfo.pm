@@ -1,3 +1,4 @@
+# ABSTRACT: Get IP/IPList Info (location, as number, etc)
 package Simple::IPInfo;
 require Exporter;
 @ISA    = qw(Exporter);
@@ -5,9 +6,11 @@ require Exporter;
   get_ip_loc
   get_ip_asn
   get_ip_info
+  read_table_ipinfo
 );
 use utf8;
 use Data::Validate::IP qw/is_ipv4 is_ipv6 is_public_ipv4/;
+use SimpleR::Reshape;
 use File::Spec;
 use JSON;
 use Memoize;
@@ -16,7 +19,7 @@ memoize('read_ipinfo');
 
 our $DEBUG = 0;
 
-our $VERSION=0.01;
+our $VERSION=0.02;
 
 my ( $vol, $dir, $file ) = File::Spec->splitpath(__FILE__);
 our $IPINFO_LOC_F = File::Spec->catpath( $vol, $dir, "IPInfo_LOC.json" );
@@ -32,6 +35,22 @@ our $LOCAL = {
     isp   => '局域网',
     asn   => '局域网'
 };
+
+sub read_table_ipinfo {
+    my ( $arr, $id, %o ) = @_;
+    $o{ipinfo_names} ||= [qw/state prov isp/];
+
+    my %ip = map { $_->[$id] => 1 } @$arr;
+    my $loc = get_ip_loc( [ keys %ip ] );
+    read_table(
+        $arr, %o,
+        conv_sub => sub {
+            my ($r) = @_;
+            [ @$r, @{ $loc->{ $r->[$id] } }{ @{ $o{ipinfo_names} } } ];
+        }
+    );
+}
+
 
 sub calc_ip_inet {
     my ($ip) = @_;
@@ -74,6 +93,7 @@ sub get_ip_info {
     # large amount ip can use this function
     # ip array ref => ( ip => { state,prov,area,isp } )
     my ( $ip_list, %opt ) = @_;
+    $opt{step} ||= $#$ip_list;
 
     my $ip_inet = calc_ip_list_inet($ip_list);
 
@@ -88,27 +108,32 @@ sub get_ip_info {
     my ( $i, $r ) = ( 0, $ip_info->[0] );
     my ( $s, $e ) = @{$r}{qw/inet_s inet_e/};
 
-    for my $x (@$ip_inet) {
-        my ( $ip, $inet ) = @$x;
-        print "\r$ip, $s, $e, $inet" if($DEBUG);
+    for(my $ip_i =0; $ip_i<=$#$ip_list; $ip_i+=$opt{step}+1) {
+        my $ip_j = $ip_i + $opt{step} ;
+        print "check $ip_i -> $ip_j\n";
 
-        if ( ref($inet) eq 'HASH' ) {
-            $result{$ip} = $inet;
-            next;
-        }
-        elsif ( $inet < $s or $i > $n ) {
-            $result{$ip} = $UNKNOWN;
-            next;
-        }
+        for my $x (@{$ip_inet}[ $ip_i .. $ip_j ]) {
+            my ( $ip, $inet ) = @$x;
+            print "\r$ip, $s, $e, $inet" if($DEBUG);
 
-        while ( $inet > $e and $i < $n ) {
-            $i++;
-            $r = $ip_info->[$i];
-            ( $s, $e ) = @{$r}{qw/inet_s inet_e/};
-        }
+            if ( ref($inet) eq 'HASH' ) {
+                $result{$ip} = $inet;
+                next;
+            }
+            elsif ( $inet < $s or $i > $n ) {
+                $result{$ip} = $UNKNOWN;
+                next;
+            }
 
-        if ( $inet >= $s and $inet <= $e and $i <= $n ) {
-            $result{$ip} = $r;
+            while ( $inet > $e and $i < $n ) {
+                $i++;
+                $r = $ip_info->[$i];
+                ( $s, $e ) = @{$r}{qw/inet_s inet_e/};
+            }
+
+            if ( $inet >= $s and $inet <= $e and $i <= $n ) {
+                $result{$ip} = $r;
+            }
         }
     }
 
@@ -144,85 +169,3 @@ sub is_public_ip {
 } ## end sub check_extnet_ip
 
 1;
-=pod
-=encoding utf8
-
-=head1 NAME
-
-Simple::IPInfo - Get IP/IPList Info (location, as number, etc)
-
-给定单个IP或IP列表，查对应的区域信息，或AS号
-
-=head1 SYNOPSIS
-
-    use Simple::IPInfo;
-    use Data::Dumper;
-    use utf8;
-
-    my $r_loc = get_ip_loc('202.38.64.10');
-    my $r_asn = get_ip_asn('202.38.64.10');
-    print Dumper($r_loc,$r_asn);
-
-    my $rr_loc = get_ip_loc([ '202.38.64.10', '202.96.196.33' ]);
-    my $rr_asn = get_ip_asn([ '202.38.64.10', '202.96.196.33' ]);
-    print Dumper($rr_loc, $rr_asn);
-
-=head1 DESCRIPTION
-
-    default ip as data: ftp://routeviews.org/dnszones/originas.bz2
-
-    default ip location data: http://ip.taobao.com
-
-=head1 METHOD
-
-=head2 get_ip_loc
-
-get ip location, with state, prov, isp
-
-返回IP区域信息，包括国家、省份、运营商
-
-    my $r = get_ip_loc('202.38.64.10');
-
-    my $rr = get_ip_loc([ '202.38.64.10', '202.96.196.33' ]);
-
-    # {  
-    # $ip_a => { state => ... , prov => ..., isp => ... }, 
-    # $ip_b => { state => ... , prov => ..., isp => ... }, 
-    # }
-
-=head2 get_ip_asn
-
-get ip asn
-
-返回IP的AS号
-
-    my $r = get_ip_asn('202.38.64.10');
-
-    my $rr = get_ip_asn([ '202.38.64.10', '202.96.196.33' ]);
-
-    # {  
-    # $ip_a => { asn => ... }, 
-    # $ip_b => { asn => ... }, 
-    # }
-
-=head2 get_ip_info
-
-get_ip_info from some json file, see also IPInfo_LOC.json 
-
-给定IP列表，以及json文件，返回json文件提供的IP信息，格式参考IPInfo_LOC.json 
-
-    my $rr = get_ip_info([ '202.38.64.10', '202.96.196.33' ], 
-        ip_info_file => 'some_ipinfo.json', 
-    );
-
-=head1 ATTR
-
-=head2 DEBUG
-
-set $Simple::IPInfo::DEBUG = 1  for more details
-
-=head1 AUTHOR
-
-Abby Pan <abbypan@gmail.com>
-
-=cut
