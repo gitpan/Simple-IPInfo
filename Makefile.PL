@@ -30,9 +30,10 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Data::Validate::IP" => 0,
     "JSON" => 0,
-    "Memoize" => 0
+    "Memoize" => 0,
+    "SimpleR::Reshape" => 0
   },
-  "VERSION" => "0.02",
+  "VERSION" => "0.03",
   "test" => {
     "TESTS" => ""
   }
@@ -42,7 +43,8 @@ my %WriteMakefileArgs = (
 my %FallbackPrereqs = (
   "Data::Validate::IP" => 0,
   "JSON" => 0,
-  "Memoize" => 0
+  "Memoize" => 0,
+  "SimpleR::Reshape" => 0
 );
 
 

@@ -7,6 +7,7 @@ require Exporter;
   get_ip_asn
   get_ip_info
   read_table_ipinfo
+  get_ipc_info
 );
 use utf8;
 use Data::Validate::IP qw/is_ipv4 is_ipv6 is_public_ipv4/;
@@ -19,7 +20,7 @@ memoize('read_ipinfo');
 
 our $DEBUG = 0;
 
-our $VERSION=0.02;
+our $VERSION=0.03;
 
 my ( $vol, $dir, $file ) = File::Spec->splitpath(__FILE__);
 our $IPINFO_LOC_F = File::Spec->catpath( $vol, $dir, "IPInfo_LOC.json" );
@@ -38,15 +39,37 @@ our $LOCAL = {
 
 sub read_table_ipinfo {
     my ( $arr, $id, %o ) = @_;
+    $o{ip_info_file} ||= $IPINFO_LOC_F;
     $o{ipinfo_names} ||= [qw/state prov isp/];
 
-    my %ip = map { $_->[$id] => 1 } @$arr;
-    my $loc = get_ip_loc( [ keys %ip ] );
+    #my %ip = map { $_->[$id] => 1 } @$arr;
+    #my $loc = get_ip_loc( [ keys %ip ], %o );
+    my %ip_c;
+    read_table(
+        $arr, %o,
+        return_arrayref => 0, 
+        write_file=> undef, 
+        conv_sub => sub {
+            my ($r) = @_;
+
+            my $ip = $r->[$id];
+            $ip=~s/\.\d+$/.0/;
+            $ip_c{$ip} = 1;
+
+            #[ @$r, @{ $loc->{ $r->[$id] } }{ @{ $o{ipinfo_names} } } ];
+        }
+    );
+
+    my $ip_info = get_ip_info([ keys %ip_c ], %o);
     read_table(
         $arr, %o,
         conv_sub => sub {
             my ($r) = @_;
-            [ @$r, @{ $loc->{ $r->[$id] } }{ @{ $o{ipinfo_names} } } ];
+
+            my $ip = $r->[$id];
+            $ip=~s/\.\d+$/.0/;
+
+            [ @$r, @{ $ip_info->{ $ip } }{ @{ $o{ipinfo_names} } } ];
         }
     );
 }
@@ -88,12 +111,23 @@ sub get_ip_loc {
     return get_ip_info( $ip_list, %opt );
 }
 
+sub get_ipc_info {
+    my ($ip, $info) = @_;
+    my $ip_c = $ip;
+    $ip_c=~s/\.\d+$/.0/;
+    return $info->{$ip_c};
+}
+
 sub get_ip_info {
 
     # large amount ip can use this function
     # ip array ref => ( ip => { state,prov,area,isp } )
     my ( $ip_list, %opt ) = @_;
     $opt{step} ||= $#$ip_list;
+
+    if($opt{use_ip_c}){
+        s/\.\d+$/.0/ for @$ip_list;
+    }
 
     my $ip_inet = calc_ip_list_inet($ip_list);
 
@@ -106,7 +140,7 @@ sub get_ip_info {
     my %result;
 
     my ( $i, $r ) = ( 0, $ip_info->[0] );
-    my ( $s, $e ) = @{$r}{qw/inet_s inet_e/};
+    my ( $s, $e ) = @{$r}{qw/s e/};
 
     for(my $ip_i =0; $ip_i<=$#$ip_list; $ip_i+=$opt{step}+1) {
         my $ip_j = $ip_i + $opt{step} ;
@@ -128,7 +162,7 @@ sub get_ip_info {
             while ( $inet > $e and $i < $n ) {
                 $i++;
                 $r = $ip_info->[$i];
-                ( $s, $e ) = @{$r}{qw/inet_s inet_e/};
+                ( $s, $e ) = @{$r}{qw/s e/};
             }
 
             if ( $inet >= $s and $inet <= $e and $i <= $n ) {

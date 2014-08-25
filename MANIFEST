@@ -17,4 +17,5 @@ lib/Simple/IPInfo.pm
 lib/Simple/IPInfo_ASN.json
 lib/Simple/IPInfo_LOC.json
 xt/01.get_ip_info.t
+xt/02.read_table_ipinfo.csv
 xt/02.read_table_ipinfo.t

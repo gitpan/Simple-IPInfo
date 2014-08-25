@@ -16,4 +16,5 @@ requires:
   Data::Validate::IP: '0'
   JSON: '0'
   Memoize: '0'
-version: '0.02'
+  SimpleR::Reshape: '0'
+version: '0.03'
