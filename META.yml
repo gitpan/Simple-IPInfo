@@ -1,5 +1,5 @@
 ---
-abstract: 'Get IP/IPList Info (location, as number, etc)'
+abstract: "Get IP/IPList Info (location, as number, etc)\r"
 author:
   - 'Abby Pan <abbypan@gmail.com>'
 build_requires: {}
@@ -17,4 +17,6 @@ requires:
   JSON: '0'
   Memoize: '0'
   SimpleR::Reshape: '0'
-version: '0.03'
+resources:
+  repository: https://github.com/abbypan/Simple-IPInfo.git
+version: '0.04'

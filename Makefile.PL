@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Get IP/IPList Info (location, as number, etc)",
+  "ABSTRACT" => "Get IP/IPList Info (location, as number, etc)\r",
   "AUTHOR" => "Abby Pan <abbypan\@gmail.com>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
@@ -33,7 +33,7 @@ my %WriteMakefileArgs = (
     "Memoize" => 0,
     "SimpleR::Reshape" => 0
   },
-  "VERSION" => "0.03",
+  "VERSION" => "0.04",
   "test" => {
     "TESTS" => ""
   }
