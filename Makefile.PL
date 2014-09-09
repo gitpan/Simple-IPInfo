@@ -17,13 +17,17 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Simple-IPInfo",
   "EXE_FILES" => [
+    "bin/ask_ip_loc.pl",
     "bin/compare_ip_loc.pl",
-    "bin/ip_loc_taobao.pl",
+    "bin/fix_ip_loc.pl",
+    "bin/inet_ip_loc.pl",
+    "bin/init_ip_loc.pl",
     "bin/merge_ip_loc.pl",
     "bin/parse_ip_as.pl",
     "bin/parse_ip_loc.pl",
-    "bin/read_table_ipinfo.csv",
-    "bin/sort_ip_loc.pl"
+    "bin/tidy_ip_loc.pl",
+    "bin/write_ip_as.pl",
+    "bin/write_ip_loc.pl"
   ],
   "LICENSE" => "perl",
   "NAME" => "Simple::IPInfo",
@@ -33,7 +37,7 @@ my %WriteMakefileArgs = (
     "Memoize" => 0,
     "SimpleR::Reshape" => 0
   },
-  "VERSION" => "0.04",
+  "VERSION" => "0.05",
   "test" => {
     "TESTS" => ""
   }

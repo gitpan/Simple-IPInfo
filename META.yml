@@ -19,4 +19,4 @@ requires:
   SimpleR::Reshape: '0'
 resources:
   repository: https://github.com/abbypan/Simple-IPInfo.git
-version: '0.04'
+version: '0.05'
